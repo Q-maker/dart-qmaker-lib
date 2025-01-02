@@ -1,3 +1,4 @@
+import 'package:qcmcore/io/handler.dart';
 import 'package:qcmcore/io/qcm_file.dart';
 
 abstract class  QPackage with QFile{
@@ -39,4 +40,33 @@ mixin QFile{
   static const String TYPE_BINARY = "qcmbin";
   static const String TYPE_RESOURCE = "res";
   static const String TYPE_QXT = "qxt";
+}
+
+
+abstract class IOInterface {
+  int FLAG_SUPPORTS_OPERATION_WRITE = 1 << 1;
+  int FLAG_SUPPORTS_OPERATION_DELETE = 1 << 2;
+  int FLAG_SUPPORTS_OPERATION_CREATE = 1 << 3;
+  int FLAG_SUPPORTS_OPERATION_READ = 1 << 4;
+  int FLAG_SUPPORTS_OPERATION_RENAME = 1 << 6;
+  int FLAG_SUPPORTS_OPERATION_COPY = 1 << 7;
+  int FLAG_SUPPORTS_OPERATION_MOVE = 1 << 8;
+  int FLAG_SUPPORTS_OPERATION_REMOVE = 1 << 10;
+  int FLAG_SUPPORTS_OPERATION_PERSIST_ACCESS = 1 << 11;
+
+  int getContentLength(Uri uri);
+
+  int getLastModifiedAt(Uri uri);
+
+  Stream<List<int>> openInputStream(Uri uri);
+
+  QWriter getWriter(QPackage qPackage);
+
+  bool delete(String uri);
+
+  bool exists(String uri);
+
+  bool moveTo(String uri, String destinationUri);
+
+  int getSupportedOperationFlags(String uriString);
 }

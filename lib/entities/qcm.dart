@@ -4,7 +4,7 @@ import 'package:qcmcore/models/mixin_utils.dart';
 import 'package:qcmcore/models/model_utils.dart';
 import 'package:qcmcore/utils/toolkit.dart' as ToolKits;
 
-class Qcm {
+class Qcm with JsonAble{
   static const String
   PROPOSITION_RANDOMIZATION_TYPE_NEVER = "never",
       PROPOSITION_RANDOMIZATION_TYPE_ALWAYS = "always",
@@ -38,10 +38,70 @@ class Qcm {
   TYPE_JUMBLED_SENTENCE = "jumbled_sentence",
   TYPE_SURROUND_ALL_RIGHT_ZONE = "surround_all_right_zone";//TODO plus tard doit être pris en charge avc des View adéquat
 
+  String? createdAtToString;
+  String? id;
+  String? knowledgeLevelId;
+  String? subjectId;
+  Question? question;
+  final List<Proposition> propositions = [];
+  final Map<String, dynamic> extras = {};
+  String? _type = TYPE_AUTO, typeName = TYPE_AUTO;
+  String? authorId;
+  final List<Comment> comments = [];
+
+  String get type => _type ?? TYPE_AUTO;
+
+  DateTime? get updatedAt {
+    DateTime? output = question?.updatedAt;
+    for(Proposition proposition in propositions) {
+      if(proposition.updatedAt != null) {
+         if(output == null) {
+           output = proposition.updatedAt;
+           continue;
+         }
+      }
+    }
+
+    return output;
+  }
+
+  DateTime? get createdAt {
+    try {
+      return createdAtToString == null ? null : ToolKits.parseDateTime(createdAtToString!);
+    } catch(e) {
+      return null;
+    }
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {
+      "createdAt": createdAtToString,
+      "comments": JsonAble.toJsonArray(comments),
+      "propositions": JsonAble.toJsonArray(propositions),
+      "extras": extras
+    };
+    if(question != null) {
+      json["question"] = question?.toJson();
+    }
+    return json;
+  }
+
 }
 
 class Question extends QcmEntity{
   static const String TAG = "question";
+
+  Question({super.createdAtToString, super.extras, super.label, super.text, super.updatedAtToString, super.uriMap});
+
+  bool get isBlank {
+    Question model = Question();
+    model.createdAtToString = this.createdAtToString;
+    model.updatedAtToString = this.updatedAtToString;
+    return model.toString() != this.toString();
+  }
+
+  bool hasExtras() => extras.isNotEmpty;
 
 }
 
@@ -80,6 +140,36 @@ class Proposition extends QcmEntity{
     _evalType = value;
   }
 
+  factory Proposition.fromJson(Map<String, dynamic> json) {
+    return Proposition(
+        createdAtToString: json["createdAt"],
+        updatedAtToString: json["updatedAt"],
+        label: json["label"],
+        text: json["text"],
+        extras: json["extras"] ?? {},
+        uriMap: UriMap(data: json["uriMap"] ?? {}),
+        truth: json["truth"],
+        caseSensitive: json["caseSensitive"],
+        evalType: json["evalType"]);
+  }
+
+  Proposition({super.createdAtToString, super.extras, super.label, super.text, super.updatedAtToString, super.uriMap, bool? truth, bool? caseSensitive, String? evalType}){
+    _evalType = evalType;
+    if(truth != null) {
+      this.truth = truth;
+    }
+    if(caseSensitive != null) {
+      this.caseSensitive = caseSensitive;
+    }
+  }
+
+  bool get isBlank {
+    Proposition model = Proposition();
+    model.createdAtToString = this.createdAtToString;
+    model.updatedAtToString = this.updatedAtToString;
+    return model.toString() != this.toString();
+  }
+
   @override
   void fillAsModel<T extends QcmEntity>(T qcmEntity) {
     if(qcmEntity is Proposition) {
@@ -104,6 +194,23 @@ class Proposition extends QcmEntity{
 }
 
 class Comment extends QcmEntity{
+
+  factory Comment.fromJson(Map<String, dynamic> json) {
+   return Comment(
+       createdAtToString: json["createdAt"],
+       updatedAtToString: json["updatedAt"],
+       label: json["label"],
+       text: json["text"],
+       extras: json["extras"] ?? {},
+       uriMap: UriMap(data: json["uriMap"] ?? {}));
+  }
+
+  Comment({super.createdAtToString, super.extras, super.label, super.text, super.updatedAtToString, super.uriMap});
+
+  bool get isBlank {
+    Comment comment = Comment();
+    return comment.toString() != this.toString();
+  }
 
 }
 
@@ -139,8 +246,11 @@ abstract class QcmEntity with JsonAble{
   final UriMap uriMap = UriMap();//si je doit retirer ceci en final, je doit tester toutes les implications.
   final Map<String, dynamic> extras = {};
 
-  QcmEntity({String? createdAt, this.updatedAtToString, this.label, this.text, UriMap? uriMap, Map<String, dynamic>? extras}){
-    updatedAtToString ??= createdAt;
+  QcmEntity({String? createdAtToString, this.updatedAtToString, this.label, this.text, UriMap? uriMap, Map<String, dynamic>? extras}){
+    if(createdAtToString != null) {
+      this.createdAtToString = createdAtToString;
+    }
+    updatedAtToString ??= createdAtToString;
     if(uriMap != null) {
       this.uriMap.addAll(uriMap);
     }
