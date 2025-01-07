@@ -191,6 +191,8 @@ class MapWrapper<T, Y> with MapBase<T, Y> {
   final Map<T, Y> _data;
   MapWrapper(this._data);
 
+  Map<T, Y> get wrappedMap => _data;
+
   @override
   Y? operator [](Object? key) {
     return _data[key];

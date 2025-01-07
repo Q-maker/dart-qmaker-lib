@@ -11,8 +11,7 @@ class Bundle extends MapWrapper<String, dynamic> with JsonAble{
 
   @override
   Map<String, dynamic> toJson() {
-    // TODO: implement toJson
-    throw UnimplementedError();
+    return wrappedMap;
   }
 
 }
